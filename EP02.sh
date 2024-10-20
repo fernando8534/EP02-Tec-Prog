@@ -60,6 +60,8 @@ não implementando
 }
 
 function sair {
+    echo Fim do programa
+    echo +++++++++++++++++++++++++++++++++++++++
     exit 0
 }
 
