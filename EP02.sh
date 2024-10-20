@@ -14,9 +14,19 @@ dir_atual=$(pwd)
 dir_dados="/Dados"
 
 function selecionar_arquivo {
-    echo "
-não implementando
-    "
+    echo Escolha uma opção de arquivo:
+    indice="0"
+    for i in $(ls "$dir_atual$dir_dados"); do
+        indice=$(echo "$indice + 1" | bc)
+        echo "$indice) $i"
+    done
+    echo -n "#? " 
+    read arq_indice
+    arq_escolhido="$(echo "$(ls "$dir_atual$dir_dados")" |tr '\n' ' ' | cut -d' ' -f$arq_indice)"
+    echo +++ Arquivo atual: "$arq_escolhido"
+    echo +++ Número de reclamações: "$(wc -l "$dir_atual$dir_dados"/"$arq_escolhido" | cut -d' ' -f1)"
+    echo +++++++++++++++++++++++++++++++++++++++
+    echo
 }
 
 function adicionar_filtro_coluna {
@@ -88,6 +98,7 @@ while [ true ]; do
 3) limpar_filtros_colunas    6) mostrar_reclamacoes
 #? "
     read usr_input
+    echo
     case $usr_input in
         1 ) selecionar_arquivo;;
         2 ) adicionar_filtro_coluna;;
