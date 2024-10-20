@@ -75,7 +75,7 @@ Serviço 156 da Prefeitura de São Paulo
 if [ $# != 0 ]; then
     wget -nv -i $1 -P "$dir_atual$dir_dados"
     wc $1 &> /dev/null || exit 0 #Caso não ache o programa, o script termina 
-    for i in $(ls "$dir_atual$dir_dados" | head -n $(wc $1 -w 2> /dev/null | cut -d' ' -f1) 2> /dev/null); do 
+    for i in $(ls "$dir_atual$dir_dados" --time=creation | head -n $(wc $1 -w 2> /dev/null | cut -d' ' -f1) 2> /dev/null); do 
         nome_arq=$(echo $i)
         iconv -f ISO-8859-1 -t UTF8 "$dir_atual$dir_dados"/"$nome_arq" -o "$dir_atual$dir_dados"/temp.csv
         rm "$dir_atual$dir_dados"/"$nome_arq"
