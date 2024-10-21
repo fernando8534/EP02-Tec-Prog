@@ -73,8 +73,8 @@ Serviço 156 da Prefeitura de São Paulo
 
 #Se o número de parâmetros for diferente de 0, então baixamos os n URL's com o wget no path_atual/Dados. Além disso, modificamos a codificação do arquivo csv baixado de ISO-8859-1 para UTF+8 com o iconv, deletando o antigo.
 if [ $# != 0 ]; then
+    wc $1 &> /dev/null || echo ERRO: O arquivo "$1" não existe. && exit 0 #Caso não ache o programa, o script termina 
     wget -nv -i $1 -P "$dir_atual$dir_dados"
-    wc $1 &> /dev/null || exit 0 #Caso não ache o programa, o script termina 
     for i in $(ls "$dir_atual$dir_dados" --time=creation | head -n $(wc $1 -w 2> /dev/null | cut -d' ' -f1) 2> /dev/null); do 
         nome_arq=$(echo $i)
         iconv -f ISO-8859-1 -t UTF8 "$dir_atual$dir_dados"/"$nome_arq" -o "$dir_atual$dir_dados"/temp.csv
@@ -109,9 +109,8 @@ while [ true ]; do
         5 ) mostrar_ranking_reclamacoes;;
         6 ) mostrar_reclamacoes;;
         7 ) sair;;
-        *) echo "
-Comando Invalido
-        ";;
+        *) echo "Comando Invalido
++++++++++++++++++++++++++++++++++++++++";;
     esac
 done
 
