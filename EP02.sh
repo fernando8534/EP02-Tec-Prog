@@ -30,15 +30,53 @@ function selecionar_arquivo {
 }
 
 function adicionar_filtro_coluna {
-    echo "
-não implementando
-    "
+    echo Escolha uma opção de coluna para o filtro:
+    indice="0"
+    for i in $(head -n +1 $dir_atual$dir_dados"/"$arq_escolhido | tr ' ;' '* '); do
+        indice=$(echo "$indice + 1" | bc)
+        echo "$indice) $(echo $i | tr '*' ' ')"
+    done
+    echo -n "#? "
+    read coluna_indice
+    coluna_escolhida="$(head -n +1 $dir_atual$dir_dados"/"$arq_escolhido | tr ' ;' '* ' | cut -d' ' -f$coluna_indice)"
+    coluna_escolhida="$(echo $coluna_escolhida | tr '*' ' ')"
+    echo
+    echo Escolha uma opção de valor para "$coluna_escolhida":
+    indice="0"
+    for i in $(tail -n +2 $dir_atual$dir_dados"/"$arq_escolhido | cut -d ';' -f$coluna_indice | sort | uniq | tr ' \n' '* '); do
+        indice=$(echo "$indice + 1" | bc)
+        echo "$indice) $(echo $i | tr '*' ' ')"
+    done
+    echo -n "#? "
+    read filtro_indice
+    filtro_escolhido="$(tail -n +2 $dir_atual$dir_dados"/"$arq_escolhido | cut -d ';' -f$coluna_indice | sort | uniq | tr ' \n' '* ' | cut -d ' ' -f$filtro_indice)"
+    echo
+    echo +++ Adicionado filtro: "$coluna_escolhida" = "$filtro_escolhido"
+    echo +++ Arquivo atual: $arq_escolhido
+    filtros_salvos[numero_filtros]=$(echo $coluna_escolhida = $filtro_escolhido | tr ' ' '*')
+    numero_filtros=$(echo "$numero_filtros + 1" | bc)
+    echo +++ Filtros atuais:
+    for i in $(seq $(echo ${#filtros_salvos[*]})); do
+        if [ $i != ${#filtros_salvos[*]} ]; then
+            i=$(echo "$i - 1" | bc)
+            echo -n ${filtros_salvos[$i]} | tr '*' ' '
+            echo -n " | "
+        else
+            i=$(echo "$i - 1" | bc)
+            echo ${filtros_salvos[$i]} | tr '*' ' '
+        fi 
+    done
+    echo +++++++++++++++++++++++++++++++++++++++
+
 }
 
 function limpar_filtros_colunas {
-    echo "
-não implementando
-    "
+    filtros_salvos=()
+    numero_filtros="0"
+    echo +++ Filtros removidos
+    echo +++ Arquivo atual: $arq_escolhido
+    echo +++ Número de reclamações: "$(wc -l "$dir_atual$dir_dados"/"$arq_escolhido" | cut -d' ' -f1)"
+    echo +++++++++++++++++++++++++++++++++++++++
 }
 
 function mostrar_duracao_media_reclamacao {
@@ -80,17 +118,24 @@ if [ $# != 0 ]; then
         iconv -f ISO-8859-1 -t UTF8 "$dir_atual$dir_dados"/"$nome_arq" -o "$dir_atual$dir_dados"/temp.csv
         rm "$dir_atual$dir_dados"/"$nome_arq"
         mv "$dir_atual$dir_dados"/temp.csv "$dir_atual$dir_dados"/"$nome_arq"
+        if [ -e "$dir_atual$dir_dados"/arquivocompleto.csv ]; then
+            tail -n +2 "$dir_atual$dir_dados"/"$nome_arq" >> "$dir_atual$dir_dados"/arquivocompleto.csv
+        else
+            cat "$dir_atual$dir_dados"/"$nome_arq" >> "$dir_atual$dir_dados"/arquivocompleto.csv
+        fi
     done
-fi  
+fi 
 
 #Checa se tem arquivos baixados
-if [ -z "$(ls -A "$dir_atual$dir_dados" 2>/dev/null)" ]; then
+if [ ! "$(ls -A "$dir_atual$dir_dados")" ]; then
    echo "ERRO: Não há dados baixados.
 Para baixar os dados antes de gerar as estatísticas, use:
   ./ep2_servico156.sh <nome do arquivo com URLs de dados do Serviço 156>"
   exit 0    
 fi
 
+arq_escolhido="arquivocompleto.csv"
+numero_filtros="0"
 echo
 
 while [ true ]; do
