@@ -52,11 +52,11 @@ function adicionar_filtro_coluna {
     echo -n "#? "
     read filtro_indice
     filtro_escolhido="$(tail -n +2 $dir_atual$dir_dados"/"$arq_escolhido | cut -d ';' -f$coluna_indice | grep -v '^$' | sort | uniq | tr ' \n' '@ ' | cut -d ' ' -f$filtro_indice)"
+    filtro_escolhido=$(echo $filtro_escolhido | tr '@' ' ') 
     echo
     echo +++ Adicionado filtro: "$coluna_escolhida" = "$filtro_escolhido"
     echo +++ Arquivo atual: $arq_escolhido
-    filtro_escolhido=$(echo $filtro_escolhido | tr '@' ' ') 
-    grep " $filtro_escolhido" $dir_atual$dir_dados/.csv > $dir_atual$dir_dados/temp.csv
+    grep "$filtro_escolhido" $dir_atual$dir_dados/.csv > $dir_atual$dir_dados/temp.csv
     cat $dir_atual$dir_dados/temp.csv > $dir_atual$dir_dados/.csv
     rm $dir_atual$dir_dados/temp.csv
     filtros_salvos[numero_filtros]=$(echo $coluna_escolhida = $filtro_escolhido | tr ' ' '@')
