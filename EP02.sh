@@ -15,6 +15,7 @@ dir_atual=$(pwd)
 dir_dados="/Dados"
 
 function selecionar_arquivo {
+    echo
     echo Escolha uma opção de arquivo:
     indice="0"
     for i in $(ls "$dir_atual$dir_dados"); do
@@ -25,13 +26,11 @@ function selecionar_arquivo {
     read arq_indice
     arq_escolhido="$(echo "$(ls "$dir_atual$dir_dados")" |tr '\n' ' ' | cut -d' ' -f$arq_indice)"
     cat $dir_atual$dir_dados/$arq_escolhido > $dir_atual$dir_dados/.csv
-    echo +++ Arquivo atual: "$arq_escolhido"
-    echo +++ Número de reclamações: "$(wc -l "$dir_atual$dir_dados"/"$arq_escolhido" | cut -d' ' -f1)"
-    echo +++++++++++++++++++++++++++++++++++++++
-    echo
+    limpar_filtros_colunas
 }
 
 function adicionar_filtro_coluna {
+    echo
     echo Escolha uma opção de coluna para o filtro:
     indice="0"
     for i in $(head -n +1 $dir_atual$dir_dados"/"$arq_escolhido | tr ' ;' '@ '); do
@@ -53,7 +52,6 @@ function adicionar_filtro_coluna {
     read filtro_indice
     filtro_escolhido="$(tail -n +2 $dir_atual$dir_dados"/"$arq_escolhido | cut -d ';' -f$coluna_indice | grep -v '^$' | sort | uniq | tr ' \n' '@ ' | cut -d ' ' -f$filtro_indice)"
     filtro_escolhido=$(echo $filtro_escolhido | tr '@' ' ') 
-    echo
     echo +++ Adicionado filtro: "$coluna_escolhida" = "$filtro_escolhido"
     echo +++ Arquivo atual: $arq_escolhido
     grep "$filtro_escolhido" $dir_atual$dir_dados/.csv > $dir_atual$dir_dados/temp.csv
@@ -75,16 +73,17 @@ function adicionar_filtro_coluna {
     echo -n +++ Número de reclamações: 
     echo $(wc -l "$dir_atual$dir_dados/.csv" | cut -d ' ' -f1)
     echo +++++++++++++++++++++++++++++++++++++++
+    echo
 }
 
 function limpar_filtros_colunas {
     filtros_salvos=()
     numero_filtros="0"
     cat $dir_atual$dir_dados/$arq_escolhido > $dir_atual$dir_dados/.csv
-    echo +++ Filtros removidos
     echo +++ Arquivo atual: $arq_escolhido
     echo +++ Número de reclamações: "$(wc -l "$dir_atual$dir_dados"/.csv | cut -d' ' -f1)"
     echo +++++++++++++++++++++++++++++++++++++++
+    echo
 }
 
 function mostrar_duracao_media_reclamacao {
@@ -156,16 +155,17 @@ while [ true ]; do
 3) limpar_filtros_colunas    6) mostrar_reclamacoes
 #? "
     read usr_input
-    echo
     case $usr_input in
         1 ) selecionar_arquivo;;
         2 ) adicionar_filtro_coluna;;
-        3 ) limpar_filtros_colunas;;
+        3 ) echo +++ Filtros removidos
+        limpar_filtros_colunas;;
         4 ) mostrar_duracao_media_reclamacao;;
         5 ) mostrar_ranking_reclamacoes;;
         6 ) mostrar_reclamacoes;;
         7 ) sair;;
         *) echo "Comando Invalido
-+++++++++++++++++++++++++++++++++++++++";;
++++++++++++++++++++++++++++++++++++++++
+";;
     esac
 done
