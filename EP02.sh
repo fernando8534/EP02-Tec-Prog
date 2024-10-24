@@ -44,13 +44,13 @@ function adicionar_filtro_coluna {
     echo
     echo Escolha uma opção de valor para "$coluna_escolhida":
     indice="0"
-    for i in $(tail -n +2 $dir_atual$dir_dados"/"$arq_escolhido | cut -d ';' -f$coluna_indice | grep -v '^$' | sort | uniq | tr ' \n' '@ '); do
+    for i in $(tail -n +2 $dir_atual$dir_dados/.csv | cut -d ';' -f$coluna_indice | grep -v '^$' | sort | uniq | tr ' \n' '@ '); do
         indice=$(echo "$indice + 1" | bc)
         echo "$indice) $(echo $i | tr '@' ' ')"
     done
     echo -n "#? "
     read filtro_indice
-    filtro_escolhido="$(tail -n +2 $dir_atual$dir_dados"/"$arq_escolhido | cut -d ';' -f$coluna_indice | grep -v '^$' | sort | uniq | tr ' \n' '@ ' | cut -d ' ' -f$filtro_indice)"
+    filtro_escolhido="$(tail -n +2 $dir_atual$dir_dados/.csv | cut -d ';' -f$coluna_indice | grep -v '^$' | sort | uniq | tr ' \n' '@ ' | cut -d ' ' -f$filtro_indice)"
     filtro_escolhido=$(echo $filtro_escolhido | tr '@' ' ') 
     echo +++ Adicionado filtro: "$coluna_escolhida" = "$filtro_escolhido"
     echo +++ Arquivo atual: $arq_escolhido
@@ -60,8 +60,8 @@ function adicionar_filtro_coluna {
     filtros_salvos[numero_filtros]=$(echo $coluna_escolhida = $filtro_escolhido | tr ' ' '@')
     numero_filtros=$(echo "$numero_filtros + 1" | bc)
     echo +++ Filtros atuais:
-    for i in $(seq $(echo ${#filtros_salvos[@]})); do
-        if [ $i != ${#filtros_salvos[@]} ]; then
+    for i in $(seq $(echo ${#filtros_salvos[*]})); do
+        if [ $i != ${#filtros_salvos[*]} ]; then
             i=$(echo "$i - 1" | bc)
             echo -n ${filtros_salvos[$i]} | tr '@' ' '
             echo -n " | "
@@ -99,9 +99,23 @@ não implementando
 }
 
 function mostrar_reclamacoes {
-    echo "
-não implementando
-    "
+    cat $dir_atual$dir_dados/.csv 
+    echo +++ Arquivo atual: $arq_escolhido
+    echo +++ Filtros atuais:
+    for i in $(seq $(echo ${#filtros_salvos[*]})); do
+        if [ $i != ${#filtros_salvos[*]} ]; then
+            i=$(echo "$i - 1" | bc)
+            echo -n ${filtros_salvos[$i]} | tr '@' ' '
+            echo -n " | "
+        else
+            i=$(echo "$i - 1" | bc)
+            echo ${filtros_salvos[$i]} | tr '@' ' '
+        fi 
+    done
+    echo -n +++ Número de reclamações: 
+    echo $(wc -l "$dir_atual$dir_dados/.csv" | cut -d ' ' -f1)
+    echo +++++++++++++++++++++++++++++++++++++++
+    echo
 }
 
 function sair {
