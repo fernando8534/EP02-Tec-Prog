@@ -71,7 +71,7 @@ function adicionar_filtro_coluna {
         fi 
     done
     echo -n +++ Número de reclamações: 
-    echo $(wc -l "$dir_atual$dir_dados/.csv" | cut -d ' ' -f1)
+    echo $(tail -n +2 $dir_atual$dir_dados/.csv | wc -l | cut -d ' ' -f1)
     echo +++++++++++++++++++++++++++++++++++++++
     echo
 }
@@ -81,7 +81,7 @@ function limpar_filtros_colunas {
     numero_filtros="0"
     cat $dir_atual$dir_dados/$arq_escolhido > $dir_atual$dir_dados/.csv
     echo +++ Arquivo atual: $arq_escolhido
-    echo +++ Número de reclamações: "$(wc -l "$dir_atual$dir_dados"/.csv | cut -d' ' -f1)"
+    echo +++ Número de reclamações: "$(tail -n +2 $dir_atual$dir_dados/.csv | wc -l | cut -d ' ' -f1)"
     echo +++++++++++++++++++++++++++++++++++++++
     echo
 }
@@ -125,7 +125,7 @@ function mostrar_reclamacoes {
         fi 
     done
     echo -n +++ Número de reclamações: 
-    echo $(wc -l "$dir_atual$dir_dados/.csv" | cut -d ' ' -f1)
+    echo $(tail -n +2 $dir_atual$dir_dados/.csv | wc -l | cut -d ' ' -f1)
     echo +++++++++++++++++++++++++++++++++++++++
     echo
 }
@@ -133,6 +133,7 @@ function mostrar_reclamacoes {
 function sair {
     echo Fim do programa
     echo +++++++++++++++++++++++++++++++++++++++
+    rm $dir_atual$dir_dados/.csv
     exit 0
 }
 
@@ -159,18 +160,20 @@ if [ $# != 0 ]; then
     done
 fi 
 
+#Remove o suporte para evitar falso positivo quando checar o arquivo baixado
+rm $dir_atual$dir_dados/.csv 2> /dev/null
+
 #Checa se tem arquivos baixados
-if [ ! "$(ls -A "$dir_atual$dir_dados")" ]; then
+if [ ! "$(ls "$dir_atual$dir_dados")" ]; then
    echo "ERRO: Não há dados baixados.
 Para baixar os dados antes de gerar as estatísticas, use:
   ./ep2_servico156.sh <nome do arquivo com URLs de dados do Serviço 156>"
   exit 0    
 fi
 
-rm $dir_atual$dir_dados/.csv
-touch $dir_atual$dir_dados/.csv
 arq_escolhido="arquivocompleto.csv"
 numero_filtros="0"
+touch $dir_atual$dir_dados/.csv
 cat "$dir_atual$dir_dados"/"$arq_escolhido" >> "$dir_atual$dir_dados"/.csv
 echo
 
