@@ -93,9 +93,21 @@ não implementando
 }
 
 function mostrar_ranking_reclamacoes {
-    echo "
-não implementando
-    "
+    echo
+    echo Escolha uma opção de coluna para análise:
+    indice="0"
+    for i in $(head -n +1 $dir_atual$dir_dados"/"$arq_escolhido | tr ' ;' '@ '); do
+        indice=$(echo "$indice + 1" | bc)
+        echo "$indice) $(echo $i | tr '@' ' ')"
+    done
+    echo -n "#? "
+    read coluna_indice
+    coluna_escolhida="$(head -n +1 $dir_atual$dir_dados"/"$arq_escolhido | tr ' ;' '@ ' | cut -d' ' -f$coluna_indice)"
+    coluna_escolhida="$(echo $coluna_escolhida | tr '@' ' ')"
+    echo +++ Tema com mais reclamações:
+    tail -n +2 $dir_atual$dir_dados/.csv | cut -d ';' -f$coluna_indice | grep -v '^$' | sort | uniq -c | sort -n -r | head -n 5
+    echo +++++++++++++++++++++++++++++++++++++++
+    echo
 }
 
 function mostrar_reclamacoes {
