@@ -10,6 +10,7 @@
 # NUSP 2:
 ##################################################################
 
+#Variáveis para navegar pelos diretórios
 dir_atual=$(pwd)
 dir_dados="/Dados"
 
@@ -23,6 +24,7 @@ function selecionar_arquivo {
     echo -n "#? " 
     read arq_indice
     arq_escolhido="$(echo "$(ls "$dir_atual$dir_dados")" |tr '\n' ' ' | cut -d' ' -f$arq_indice)"
+    cat $dir_atual$dir_dados/$arq_escolhido > $dir_atual$dir_dados/.csv
     echo +++ Arquivo atual: "$arq_escolhido"
     echo +++ Número de reclamações: "$(wc -l "$dir_atual$dir_dados"/"$arq_escolhido" | cut -d' ' -f1)"
     echo +++++++++++++++++++++++++++++++++++++++
@@ -32,50 +34,56 @@ function selecionar_arquivo {
 function adicionar_filtro_coluna {
     echo Escolha uma opção de coluna para o filtro:
     indice="0"
-    for i in $(head -n +1 $dir_atual$dir_dados"/"$arq_escolhido | tr ' ;' '* '); do
+    for i in $(head -n +1 $dir_atual$dir_dados"/"$arq_escolhido | tr ' ;' '@ '); do
         indice=$(echo "$indice + 1" | bc)
-        echo "$indice) $(echo $i | tr '*' ' ')"
+        echo "$indice) $(echo $i | tr '@' ' ')"
     done
     echo -n "#? "
     read coluna_indice
-    coluna_escolhida="$(head -n +1 $dir_atual$dir_dados"/"$arq_escolhido | tr ' ;' '* ' | cut -d' ' -f$coluna_indice)"
-    coluna_escolhida="$(echo $coluna_escolhida | tr '*' ' ')"
+    coluna_escolhida="$(head -n +1 $dir_atual$dir_dados"/"$arq_escolhido | tr ' ;' '@ ' | cut -d' ' -f$coluna_indice)"
+    coluna_escolhida="$(echo $coluna_escolhida | tr '@' ' ')"
     echo
     echo Escolha uma opção de valor para "$coluna_escolhida":
     indice="0"
-    for i in $(tail -n +2 $dir_atual$dir_dados"/"$arq_escolhido | cut -d ';' -f$coluna_indice | sort | uniq | tr ' \n' '* '); do
+    for i in $(tail -n +2 $dir_atual$dir_dados"/"$arq_escolhido | cut -d ';' -f$coluna_indice | grep -v '^$' | sort | uniq | tr ' \n' '@ '); do
         indice=$(echo "$indice + 1" | bc)
-        echo "$indice) $(echo $i | tr '*' ' ')"
+        echo "$indice) $(echo $i | tr '@' ' ')"
     done
     echo -n "#? "
     read filtro_indice
-    filtro_escolhido="$(tail -n +2 $dir_atual$dir_dados"/"$arq_escolhido | cut -d ';' -f$coluna_indice | sort | uniq | tr ' \n' '* ' | cut -d ' ' -f$filtro_indice)"
+    filtro_escolhido="$(tail -n +2 $dir_atual$dir_dados"/"$arq_escolhido | cut -d ';' -f$coluna_indice | grep -v '^$' | sort | uniq | tr ' \n' '@ ' | cut -d ' ' -f$filtro_indice)"
     echo
     echo +++ Adicionado filtro: "$coluna_escolhida" = "$filtro_escolhido"
     echo +++ Arquivo atual: $arq_escolhido
-    filtros_salvos[numero_filtros]=$(echo $coluna_escolhida = $filtro_escolhido | tr ' ' '*')
+    filtro_escolhido=$(echo $filtro_escolhido | tr '@' ' ') 
+    grep " $filtro_escolhido" $dir_atual$dir_dados/.csv > $dir_atual$dir_dados/temp.csv
+    cat $dir_atual$dir_dados/temp.csv > $dir_atual$dir_dados/.csv
+    rm $dir_atual$dir_dados/temp.csv
+    filtros_salvos[numero_filtros]=$(echo $coluna_escolhida = $filtro_escolhido | tr ' ' '@')
     numero_filtros=$(echo "$numero_filtros + 1" | bc)
     echo +++ Filtros atuais:
-    for i in $(seq $(echo ${#filtros_salvos[*]})); do
-        if [ $i != ${#filtros_salvos[*]} ]; then
+    for i in $(seq $(echo ${#filtros_salvos[@]})); do
+        if [ $i != ${#filtros_salvos[@]} ]; then
             i=$(echo "$i - 1" | bc)
-            echo -n ${filtros_salvos[$i]} | tr '*' ' '
+            echo -n ${filtros_salvos[$i]} | tr '@' ' '
             echo -n " | "
         else
             i=$(echo "$i - 1" | bc)
-            echo ${filtros_salvos[$i]} | tr '*' ' '
+            echo ${filtros_salvos[$i]} | tr '@' ' '
         fi 
     done
+    echo -n +++ Número de reclamações: 
+    echo $(wc -l "$dir_atual$dir_dados/.csv" | cut -d ' ' -f1)
     echo +++++++++++++++++++++++++++++++++++++++
-
 }
 
 function limpar_filtros_colunas {
     filtros_salvos=()
     numero_filtros="0"
+    cat $dir_atual$dir_dados/$arq_escolhido > $dir_atual$dir_dados/.csv
     echo +++ Filtros removidos
     echo +++ Arquivo atual: $arq_escolhido
-    echo +++ Número de reclamações: "$(wc -l "$dir_atual$dir_dados"/"$arq_escolhido" | cut -d' ' -f1)"
+    echo +++ Número de reclamações: "$(wc -l "$dir_atual$dir_dados"/.csv | cut -d' ' -f1)"
     echo +++++++++++++++++++++++++++++++++++++++
 }
 
@@ -134,8 +142,11 @@ Para baixar os dados antes de gerar as estatísticas, use:
   exit 0    
 fi
 
+rm $dir_atual$dir_dados/.csv
+touch $dir_atual$dir_dados/.csv
 arq_escolhido="arquivocompleto.csv"
 numero_filtros="0"
+cat "$dir_atual$dir_dados"/"$arq_escolhido" >> "$dir_atual$dir_dados"/.csv
 echo
 
 while [ true ]; do
@@ -158,4 +169,3 @@ while [ true ]; do
 +++++++++++++++++++++++++++++++++++++++";;
     esac
 done
-
