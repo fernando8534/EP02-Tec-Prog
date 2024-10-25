@@ -17,41 +17,32 @@ dir_dados="/Dados"
 function selecionar_arquivo {
     echo
     echo Escolha uma opção de arquivo:
-    indice="0"
-    for i in $(ls "$dir_atual$dir_dados"); do
-        indice=$(echo "$indice + 1" | bc)
-        echo "$indice) $i"
+    select arq_escolhido in $(ls $dir_atual$dir_dados | tr '\n' ' '); do
+        #Salva todas as reclamações do arquivo escolhido no arquivo escondido suporte
+        cat $dir_atual$dir_dados/$arq_escolhido > $dir_atual$dir_dados/.csv
+        break
     done
-    echo -n "#? " 
-    read arq_indice
-    arq_escolhido="$(echo "$(ls "$dir_atual$dir_dados")" |tr '\n' ' ' | cut -d' ' -f$arq_indice)"
-    cat $dir_atual$dir_dados/$arq_escolhido > $dir_atual$dir_dados/.csv
+    #Limpa os filtros
     limpar_filtros_colunas
 }
 
 function adicionar_filtro_coluna {
     echo
     echo Escolha uma opção de coluna para o filtro:
-    indice="0"
-    for i in $(head -n +1 $dir_atual$dir_dados"/"$arq_escolhido | tr ' ;' '@ '); do
-        indice=$(echo "$indice + 1" | bc)
-        echo "$indice) $(echo $i | tr '@' ' ')"
+    select coluna_escolhida in "${colunas[@]}"; do
+        coluna_indice=$(head $dir_atual$dir_dados/$arq_escolhido | tr ';' '\n' | grep -n "^$coluna_escolhida$" | cut -d: -f1)
+        break
     done
-    echo -n "#? "
-    read coluna_indice
-    coluna_escolhida="$(head -n +1 $dir_atual$dir_dados"/"$arq_escolhido | tr ' ;' '@ ' | cut -d' ' -f$coluna_indice)"
-    coluna_escolhida="$(echo $coluna_escolhida | tr '@' ' ')"
-    echo
+
     echo Escolha uma opção de valor para "$coluna_escolhida":
+    filtro_selecionar=()
     indice="0"
     for i in $(tail -n +2 $dir_atual$dir_dados/.csv | cut -d ';' -f$coluna_indice | grep -v '^$' | sort | uniq | tr ' \n' '@ '); do
-        indice=$(echo "$indice + 1" | bc)
-        echo "$indice) $(echo $i | tr '@' ' ')"
+        filtro_selecionar+=("$(echo $i | tr '@' ' ')")
     done
-    echo -n "#? "
-    read filtro_indice
-    filtro_escolhido="$(tail -n +2 $dir_atual$dir_dados/.csv | cut -d ';' -f$coluna_indice | grep -v '^$' | sort | uniq | tr ' \n' '@ ' | cut -d ' ' -f$filtro_indice)"
-    filtro_escolhido=$(echo $filtro_escolhido | tr '@' ' ') 
+    select filtro_escolhido in "${filtro_selecionar[@]}"; do
+        break
+    done
     echo +++ Adicionado filtro: "$coluna_escolhida" = "$filtro_escolhido"
     echo +++ Arquivo atual: $arq_escolhido
     grep "$filtro_escolhido" $dir_atual$dir_dados/.csv > $dir_atual$dir_dados/temp.csv
@@ -60,16 +51,7 @@ function adicionar_filtro_coluna {
     filtros_salvos[numero_filtros]=$(echo $coluna_escolhida = $filtro_escolhido | tr ' ' '@')
     numero_filtros=$(echo "$numero_filtros + 1" | bc)
     echo +++ Filtros atuais:
-    for i in $(seq $(echo ${#filtros_salvos[*]})); do
-        if [ $i != ${#filtros_salvos[*]} ]; then
-            i=$(echo "$i - 1" | bc)
-            echo -n ${filtros_salvos[$i]} | tr '@' ' '
-            echo -n " | "
-        else
-            i=$(echo "$i - 1" | bc)
-            echo ${filtros_salvos[$i]} | tr '@' ' '
-        fi 
-    done
+    filtros_atuais
     echo -n +++ Número de reclamações: 
     echo $(tail -n +2 $dir_atual$dir_dados/.csv | wc -l | cut -d ' ' -f1)
     echo +++++++++++++++++++++++++++++++++++++++
@@ -95,18 +77,14 @@ não implementando
 function mostrar_ranking_reclamacoes {
     echo
     echo Escolha uma opção de coluna para análise:
-    indice="0"
-    for i in $(head -n +1 $dir_atual$dir_dados"/"$arq_escolhido | tr ' ;' '@ '); do
-        indice=$(echo "$indice + 1" | bc)
-        echo "$indice) $(echo $i | tr '@' ' ')"
+    select coluna_escolhida in "${colunas[@]}"; do
+        echo +++ Tema com mais reclamações:
+        #Transforma o tema em um indice e com ele pega os casos mais frequentes e especificos das reclamações da coluna selecionada
+        coluna_indice=$(head $dir_atual$dir_dados/$arq_escolhido | tr ';' '\n' | grep -n "^$coluna_escolhida$" | cut -d: -f1)
+        tail -n +2 $dir_atual$dir_dados/.csv | cut -d ';' -f$coluna_indice | grep -v '^$' | sort | uniq -c | sort -n -r | head -n 5
+        echo +++++++++++++++++++++++++++++++++++++++
+        break
     done
-    echo -n "#? "
-    read coluna_indice
-    coluna_escolhida="$(head -n +1 $dir_atual$dir_dados"/"$arq_escolhido | tr ' ;' '@ ' | cut -d' ' -f$coluna_indice)"
-    coluna_escolhida="$(echo $coluna_escolhida | tr '@' ' ')"
-    echo +++ Tema com mais reclamações:
-    tail -n +2 $dir_atual$dir_dados/.csv | cut -d ';' -f$coluna_indice | grep -v '^$' | sort | uniq -c | sort -n -r | head -n 5
-    echo +++++++++++++++++++++++++++++++++++++++
     echo
 }
 
@@ -114,16 +92,7 @@ function mostrar_reclamacoes {
     cat $dir_atual$dir_dados/.csv 
     echo +++ Arquivo atual: $arq_escolhido
     echo +++ Filtros atuais:
-    for i in $(seq $(echo ${#filtros_salvos[*]})); do
-        if [ $i != ${#filtros_salvos[*]} ]; then
-            i=$(echo "$i - 1" | bc)
-            echo -n ${filtros_salvos[$i]} | tr '@' ' '
-            echo -n " | "
-        else
-            i=$(echo "$i - 1" | bc)
-            echo ${filtros_salvos[$i]} | tr '@' ' '
-        fi 
-    done
+    filtros_atuais
     echo -n +++ Número de reclamações: 
     echo $(tail -n +2 $dir_atual$dir_dados/.csv | wc -l | cut -d ' ' -f1)
     echo +++++++++++++++++++++++++++++++++++++++
@@ -131,10 +100,25 @@ function mostrar_reclamacoes {
 }
 
 function sair {
+    #Apaga o arquivo suporte de reclamações e termina o script
     echo Fim do programa
     echo +++++++++++++++++++++++++++++++++++++++
     rm $dir_atual$dir_dados/.csv
     exit 0
+}
+
+function filtros_atuais {
+#Mostra os filtros salvos
+for i in $(seq $(echo ${#filtros_salvos[*]})); do
+    if [ $i != ${#filtros_salvos[*]} ]; then
+        i=$(echo "$i - 1" | bc)
+        echo -n ${filtros_salvos[$i]} | tr '@' ' '
+        echo -n " | "
+    else
+        i=$(echo "$i - 1" | bc)
+        echo ${filtros_salvos[$i]} | tr '@' ' '
+    fi 
+done
 }
 
 echo "+++++++++++++++++++++++++++++++++++++++
@@ -149,18 +133,21 @@ if [ $# != 0 ]; then
     wget -nv -i $1 -P "$dir_atual$dir_dados"
     for i in $(ls "$dir_atual$dir_dados" --time=creation | head -n $(wc $1 -w 2> /dev/null | cut -d' ' -f1) 2> /dev/null); do 
         nome_arq=$(echo $i)
-        iconv -f ISO-8859-1 -t UTF8 "$dir_atual$dir_dados"/"$nome_arq" -o "$dir_atual$dir_dados"/temp.csv
+        iconv -f ISO-8859-1 -t UTF8 "$dir_atual$dir_dados"/"$nome_arq" -o "$dir_atual$dir_dados"/temp.csv #Converte o aquivo baixado pra UTF8 e armazena no temp.csv
+        #Apaga o arquivo original e o temp.csv vira o arquivo antigo soq convertiddo
         rm "$dir_atual$dir_dados"/"$nome_arq"
-        mv "$dir_atual$dir_dados"/temp.csv "$dir_atual$dir_dados"/"$nome_arq"
+        mv "$dir_atual$dir_dados"/temp.csv "$dir_atual$dir_dados"/"$nome_arq" 
         if [ -e "$dir_atual$dir_dados"/arquivocompleto.csv ]; then
+            #Se o arquivocompleto já existe, pula o cabeçalho da coluna
             tail -n +2 "$dir_atual$dir_dados"/"$nome_arq" >> "$dir_atual$dir_dados"/arquivocompleto.csv
         else
+            #Caso contrário, cria o arquivocompleto com o cabeçalho
             cat "$dir_atual$dir_dados"/"$nome_arq" >> "$dir_atual$dir_dados"/arquivocompleto.csv
         fi
     done
 fi 
 
-#Remove o suporte para evitar falso positivo quando checar o arquivo baixado
+#Remove o suporte que contem as reclamações para evitar falso positivo quando checar o arquivo baixado
 rm $dir_atual$dir_dados/.csv 2> /dev/null
 
 #Checa se tem arquivos baixados
@@ -171,12 +158,19 @@ Para baixar os dados antes de gerar as estatísticas, use:
   exit 0    
 fi
 
+#Por padrão, o arquivo selecionado é o arquivocompleto.csv, no começo não há nenhum filtro e o arquivo suporte .csv contem todas as reclamações do arquivocompleto.csv
 arq_escolhido="arquivocompleto.csv"
 numero_filtros="0"
 touch $dir_atual$dir_dados/.csv
 cat "$dir_atual$dir_dados"/"$arq_escolhido" >> "$dir_atual$dir_dados"/.csv
 echo
 
+#Define as colunas que o arquivo contem
+for i in $(head -n +1 $dir_atual$dir_dados"/"$arq_escolhido | tr ' ;' '@ '); do
+    colunas+=("$(echo $i | tr '@' ' ')")
+done
+
+#O usuário escolhe uma opção e chama a respectiva função
 while [ true ]; do
     echo -n "Escolha uma opção de operação:
 1) selecionar_arquivo        4) mostrar_duracao_media_reclamacao   7) sair
