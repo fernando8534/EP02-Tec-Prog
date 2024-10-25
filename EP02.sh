@@ -16,10 +16,11 @@ dir_dados="/Dados"
 
 function selecionar_arquivo {
     echo
+    rm $dir_atual$dir_dados/.csv
     echo Escolha uma opção de arquivo:
     select arq_escolhido in $(ls $dir_atual$dir_dados | tr '\n' ' '); do
         #Salva todas as reclamações do arquivo escolhido no arquivo escondido suporte
-        cat $dir_atual$dir_dados/$arq_escolhido > $dir_atual$dir_dados/.csv
+        tail -n +2 $dir_atual$dir_dados/$arq_escolhido > $dir_atual$dir_dados/.csv
         break
     done
     #Limpa os filtros
@@ -33,11 +34,11 @@ function adicionar_filtro_coluna {
         coluna_indice=$(head $dir_atual$dir_dados/$arq_escolhido | tr ';' '\n' | grep -n "^$coluna_escolhida$" | cut -d: -f1)
         break
     done
-
+    echo
+    
     echo Escolha uma opção de valor para "$coluna_escolhida":
     filtro_selecionar=()
-    indice="0"
-    for i in $(tail -n +2 $dir_atual$dir_dados/.csv | cut -d ';' -f$coluna_indice | grep -v '^$' | sort | uniq | tr ' \n' '@ '); do
+    for i in $(cat $dir_atual$dir_dados/.csv | cut -d ';' -f$coluna_indice | grep -v '^$' | sort | uniq | tr ' \n' '@ '); do
         filtro_selecionar+=("$(echo $i | tr '@' ' ')")
     done
     select filtro_escolhido in "${filtro_selecionar[@]}"; do
@@ -53,7 +54,7 @@ function adicionar_filtro_coluna {
     echo +++ Filtros atuais:
     filtros_atuais
     echo -n +++ Número de reclamações: 
-    echo $(tail -n +2 $dir_atual$dir_dados/.csv | wc -l | cut -d ' ' -f1)
+    echo $(cat $dir_atual$dir_dados/.csv | wc -l | cut -d ' ' -f1)
     echo +++++++++++++++++++++++++++++++++++++++
     echo
 }
@@ -61,9 +62,9 @@ function adicionar_filtro_coluna {
 function limpar_filtros_colunas {
     filtros_salvos=()
     numero_filtros="0"
-    cat $dir_atual$dir_dados/$arq_escolhido > $dir_atual$dir_dados/.csv
+    tail -n +2 $dir_atual$dir_dados/$arq_escolhido > $dir_atual$dir_dados/.csv
     echo +++ Arquivo atual: $arq_escolhido
-    echo +++ Número de reclamações: "$(tail -n +2 $dir_atual$dir_dados/.csv | wc -l | cut -d ' ' -f1)"
+    echo +++ Número de reclamações: "$(cat $dir_atual$dir_dados/.csv | wc -l | cut -d ' ' -f1)"
     echo +++++++++++++++++++++++++++++++++++++++
     echo
 }
@@ -81,7 +82,7 @@ function mostrar_ranking_reclamacoes {
         echo +++ Tema com mais reclamações:
         #Transforma o tema em um indice e com ele pega os casos mais frequentes e especificos das reclamações da coluna selecionada
         coluna_indice=$(head $dir_atual$dir_dados/$arq_escolhido | tr ';' '\n' | grep -n "^$coluna_escolhida$" | cut -d: -f1)
-        tail -n +2 $dir_atual$dir_dados/.csv | cut -d ';' -f$coluna_indice | grep -v '^$' | sort | uniq -c | sort -n -r | head -n 5
+        cat $dir_atual$dir_dados/.csv | cut -d ';' -f$coluna_indice | grep -v '^$' | sort | uniq -c | sort -n -r | head -n 5
         echo +++++++++++++++++++++++++++++++++++++++
         break
     done
@@ -94,7 +95,7 @@ function mostrar_reclamacoes {
     echo +++ Filtros atuais:
     filtros_atuais
     echo -n +++ Número de reclamações: 
-    echo $(tail -n +2 $dir_atual$dir_dados/.csv | wc -l | cut -d ' ' -f1)
+    echo $(cat $dir_atual$dir_dados/.csv | wc -l | cut -d ' ' -f1)
     echo +++++++++++++++++++++++++++++++++++++++
     echo
 }
@@ -162,7 +163,7 @@ fi
 arq_escolhido="arquivocompleto.csv"
 numero_filtros="0"
 touch $dir_atual$dir_dados/.csv
-cat "$dir_atual$dir_dados"/"$arq_escolhido" >> "$dir_atual$dir_dados"/.csv
+tail -n +2 $dir_atual$dir_dados/$arq_escolhido > $dir_atual$dir_dados/.csv
 echo
 
 #Define as colunas que o arquivo contem
