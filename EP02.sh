@@ -53,8 +53,7 @@ function adicionar_filtro_coluna {
     numero_filtros=$(echo "$numero_filtros + 1" | bc)
     echo +++ Filtros atuais:
     filtros_atuais
-    echo -n +++ Número de reclamações: 
-    echo $(cat $dir_atual$dir_dados/.csv | wc -l | cut -d ' ' -f1)
+    echo +++ Número de reclamações: "$(cat $dir_atual$dir_dados/.csv | wc -l | cut -d ' ' -f1)"
     echo +++++++++++++++++++++++++++++++++++++++
     echo
 }
@@ -94,8 +93,7 @@ function mostrar_reclamacoes {
     echo +++ Arquivo atual: $arq_escolhido
     echo +++ Filtros atuais:
     filtros_atuais
-    echo -n +++ Número de reclamações: 
-    echo $(cat $dir_atual$dir_dados/.csv | wc -l | cut -d ' ' -f1)
+    echo +++ Número de reclamações: "$(cat $dir_atual$dir_dados/.csv | wc -l | cut -d ' ' -f1)"
     echo +++++++++++++++++++++++++++++++++++++++
     echo
 }
