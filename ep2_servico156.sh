@@ -9,6 +9,12 @@
 # Nome do(a) aluno(a) 2: Natan José Martins Domingos
 # NUSP 2: 15481350
 ##################################################################
+#Obs gerais:
+#As reclamações filtradas são guardadas no arquivo .csv
+#O tr ' ' '@' serve para não gerar confusão na hora de delimitar os termos de uma lista, por exemplo "Data de Abertura" não ser visto como "Data","de","Abertura"
+
+
+
 
 #Variáveis para navegar pelos diretórios
 dir_atual=$(pwd)
@@ -16,10 +22,11 @@ dir_dados="/Dados"
 
 function selecionar_arquivo {
     echo
+    #Remove o arquivo que contem as reclamações do arquivo selecionado anteriormente
     rm $dir_atual$dir_dados/.csv
     echo Escolha uma opção de arquivo:
     select arq_escolhido in $(ls $dir_atual$dir_dados | tr '\n' ' '); do
-        #Salva todas as reclamações do arquivo escolhido no arquivo escondido suporte
+        #Salva todas as reclamações do arquivo escolhido no arquivo suporte
         tail -n +2 $dir_atual$dir_dados/$arq_escolhido > $dir_atual$dir_dados/.csv
         break
     done
@@ -46,9 +53,11 @@ function adicionar_filtro_coluna {
     done
     echo +++ Adicionado filtro: "$coluna_escolhida" = "$filtro_escolhido"
     echo +++ Arquivo atual: $arq_escolhido
+    #Filtra as linhas com o filtro escolhido no arquivo temporário pra depois transferi-lo no .csv
     grep "$filtro_escolhido" $dir_atual$dir_dados/.csv > $dir_atual$dir_dados/temp.csv
     cat $dir_atual$dir_dados/temp.csv > $dir_atual$dir_dados/.csv
     rm $dir_atual$dir_dados/temp.csv
+    #Salva no vetor filtros_salvos o filtro escolhido e sua respectiva coluna
     filtros_salvos[numero_filtros]=$(echo $coluna_escolhida = $filtro_escolhido | tr ' ' '@')
     numero_filtros=$(echo "$numero_filtros + 1" | bc)
     echo +++ Filtros atuais:
@@ -60,6 +69,7 @@ function adicionar_filtro_coluna {
 }
 
 function limpar_filtros_colunas {
+    #Reseta o vetor filtros_salvos e atribui zero a quantidade de filtros aplicados
     filtros_salvos=()
     numero_filtros="0"
     tail -n +2 $dir_atual$dir_dados/$arq_escolhido > $dir_atual$dir_dados/.csv
@@ -112,6 +122,7 @@ function mostrar_ranking_reclamacoes {
 }
 
 function mostrar_reclamacoes {
+    #Mostra as reclamações salvas no arquivo .csv
     cat $dir_atual$dir_dados/.csv 
     echo +++ Arquivo atual: $arq_escolhido
     echo +++ Filtros atuais:
@@ -153,7 +164,7 @@ Serviço 156 da Prefeitura de São Paulo
 #Se o número de parâmetros for diferente de 0, então baixamos os n URL's com o wget no path_atual/Dados. 
 #Além disso, modificamos a codificação do arquivo csv baixado de ISO-8859-1 para UTF+8 com o iconv, deletando o antigo.
 if [ $# != 0 ]; then
-    wc $1 &> /dev/null || { echo "ERRO: O arquivo "$1" não existe. "; exit 1; } #Caso não ache o programa, o script termina 
+    wc $1 &> /dev/null || { echo "ERRO: O arquivo "$1" não existe. "; exit 0; } #Caso não ache o arquivo, o script termina 
     wget -nv -i $1 -P "$dir_atual$dir_dados"
     for i in $(ls "$dir_atual$dir_dados" | head -n $(wc $1 -w 2> /dev/null | cut -d' ' -f1) 2> /dev/null); do 
         nome_arq=$(echo $i)
@@ -171,7 +182,7 @@ if [ $# != 0 ]; then
     done
 fi 
 
-#Remove o suporte que contem as reclamações para evitar falso positivo quando checar o arquivo baixado
+#Remove o arquivo suporte que contém as reclamações para evitar falso positivo quando for checar se tem arquivos baixados
 rm $dir_atual$dir_dados/.csv 2> /dev/null
 
 #Checa se tem arquivos baixados
@@ -182,7 +193,7 @@ Para baixar os dados antes de gerar as estatísticas, use:
   exit 1
 fi
 
-#Por padrão, o arquivo selecionado é o arquivocompleto.csv, no começo não há nenhum filtro e o arquivo suporte .csv contém todas as reclamações do arquivocompleto.csv
+#Por padrão, o arquivo selecionado é o arquivocompleto.csv, no começo não há nenhum filtro e o arquivo suporte, .csv, contém todas as reclamações do arquivocompleto.csv
 arq_escolhido="arquivocompleto.csv"
 numero_filtros="0"
 touch $dir_atual$dir_dados/.csv
@@ -211,7 +222,7 @@ while [ true ]; do
         5 ) mostrar_ranking_reclamacoes;;
         6 ) mostrar_reclamacoes;;
         7 ) sair;;
-        *) echo "Comando Invalido
+        *) echo "Comando Inválido
 +++++++++++++++++++++++++++++++++++++++
 ";;
     esac
