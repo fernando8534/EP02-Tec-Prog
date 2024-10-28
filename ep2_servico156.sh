@@ -164,7 +164,8 @@ Serviço 156 da Prefeitura de São Paulo
 if [ $# != 0 ]; then
     wc $1 &> /dev/null || { echo "ERRO: O arquivo "$1" não existe. "; exit 0; } #Caso não ache o arquivo, o script termina 
     wget -nv -i $1 -P "$dir_atual$dir_dados"
-    for i in $(ls "$dir_atual$dir_dados" | head -n $(wc $1 -w 2> /dev/null | cut -d' ' -f1) 2> /dev/null); do 
+    rm $dir_atual$dir_dados/arquivocompleto.csv 2> /dev/null
+    for i in $(ls "$dir_atual$dir_dados") ; do 
         nome_arq=$(echo $i)
         iconv -f ISO-8859-1 -t UTF8 $dir_atual$dir_dados/$nome_arq -o $dir_atual$dir_dados/temp.csv #Converte o aquivo baixado para UTF8 e armazena no temp.csv
         #Apaga o arquivo original e o temp.csv vira o arquivo antigo, porém, convertido
