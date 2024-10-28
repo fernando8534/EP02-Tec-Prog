@@ -6,8 +6,8 @@
 # Nome do(a) aluno(a) 1: Fernando Ramos Takara
 # NUSP 1: 13782230
 #
-# Nome do(a) aluno(a) 2:
-# NUSP 2:
+# Nome do(a) aluno(a) 2: Natan José Martins Domingos
+# NUSP 2: 15481350
 ##################################################################
 #Obs gerais:
 #As reclamações filtradas são guardadas no arquivo .csv
@@ -79,9 +79,31 @@ function limpar_filtros_colunas {
 }
 
 function mostrar_duracao_media_reclamacao {
-    echo "
-não implementando
-    "
+    #Utiliza do vetor filtros_salvos e o formata de maneira apropriada para que seja possível filtrar as linhas relevantes para a função
+    filtros_salvos_sup=()
+    for i in "${filtros_salvos[@]}"; do
+        filtros_salvos_sup+=("$(echo $i | cut -d '=' -f2 | cut --complement -c 1 | tr '@' ' ')")
+    done
+    cat $dir_atual$dir_dados/$arq_escolhido > $dir_atual$dir_dados/temp.csv
+    for filtro in "${filtros_salvos_sup[@]}"; do
+        grep "$filtro" $dir_atual$dir_dados/temp.csv > $dir_atual$dir_dados/temp2.csv
+        cat $dir_atual$dir_dados/temp2.csv > $dir_atual$dir_dados/temp.csv
+    done
+    #A data de abertura está na coluna 1, enquanto a data de parecer se situa na coluna 13 do arquivo original
+    grep 'FINALIZADA' $dir_atual$dir_dados/temp.csv | cut -d ';' -f 1,13 | tr ';' ' ' | cut -d ' ' -f 1,3 > $dir_atual$dir_dados/temp2.csv
+    total_dias=0
+    casos=0
+    while read abertura parecer; do
+        dif_dias=$(( ("$(date -d $parecer +%s)"-"$(date -d $abertura +%s)")/86400 ))
+        total_dias=$(( total_dias+dif_dias ))
+        casos=$(( casos+1 ))
+    done < "$dir_atual$dir_dados/temp2.csv"
+    rm $dir_atual$dir_dados/temp.csv
+    rm $dir_atual$dir_dados/temp2.csv
+    let media=total_dias/casos
+    echo +++ Duração média da reclamação: $media dias
+    echo +++++++++++++++++++++++++++++++++++++++
+    echo 
 }
 
 function mostrar_ranking_reclamacoes {
@@ -99,7 +121,7 @@ function mostrar_ranking_reclamacoes {
 }
 
 function mostrar_reclamacoes {
-    #Mostra as reclamações salvas no arquivo.csv
+    #Mostra as reclamações salvas no arquivo .csv
     cat $dir_atual$dir_dados/.csv 
     echo +++ Arquivo atual: $arq_escolhido
     echo +++ Filtros atuais:
@@ -137,45 +159,46 @@ Serviço 156 da Prefeitura de São Paulo
 +++++++++++++++++++++++++++++++++++++++"
 
 
-#Se o número de parâmetros for diferente de 0, então baixamos os n URL's com o wget no path_atual/Dados. Além disso, modificamos a codificação do arquivo csv baixado de ISO-8859-1 para UTF+8 com o iconv, deletando o antigo.
+#Se o número de parâmetros for diferente de 0, então baixamos os n URL's com o wget no path_atual/Dados. 
+#Além disso, modificamos a codificação do arquivo csv baixado de ISO-8859-1 para UTF+8 com o iconv, deletando o antigo.
 if [ $# != 0 ]; then
     wc $1 &> /dev/null || { echo "ERRO: O arquivo "$1" não existe. "; exit 0; } #Caso não ache o arquivo, o script termina 
     wget -nv -i $1 -P "$dir_atual$dir_dados"
-    for i in $(ls "$dir_atual$dir_dados" --time=creation | head -n $(wc $1 -w 2> /dev/null | cut -d' ' -f1) 2> /dev/null); do 
+    for i in $(ls "$dir_atual$dir_dados" | head -n $(wc $1 -w 2> /dev/null | cut -d' ' -f1) 2> /dev/null); do 
         nome_arq=$(echo $i)
-        iconv -f ISO-8859-1 -t UTF8 "$dir_atual$dir_dados"/"$nome_arq" -o "$dir_atual$dir_dados"/temp.csv #Converte o aquivo baixado pra UTF8 e armazena no temp.csv
-        #Apaga o arquivo original e o temp.csv vira o arquivo antigo soq convertiddo
-        rm "$dir_atual$dir_dados"/"$nome_arq"
-        mv "$dir_atual$dir_dados"/temp.csv "$dir_atual$dir_dados"/"$nome_arq" 
-        if [ -e "$dir_atual$dir_dados"/arquivocompleto.csv ]; then
+        iconv -f ISO-8859-1 -t UTF8 $dir_atual$dir_dados/$nome_arq -o $dir_atual$dir_dados/temp.csv #Converte o aquivo baixado para UTF8 e armazena no temp.csv
+        #Apaga o arquivo original e o temp.csv vira o arquivo antigo, porém, convertido
+        rm $dir_atual$dir_dados/$nome_arq
+        mv $dir_atual$dir_dados/temp.csv $dir_atual$dir_dados/$nome_arq 
+        if [ -e "$dir_atual$dir_dados/arquivocompleto.csv" ]; then
             #Se o arquivocompleto já existe, pula o cabeçalho da coluna
-            tail -n +2 "$dir_atual$dir_dados"/"$nome_arq" >> "$dir_atual$dir_dados"/arquivocompleto.csv
+            tail -n +2 $dir_atual$dir_dados/$nome_arq >> $dir_atual$dir_dados/arquivocompleto.csv
         else
             #Caso contrário, cria o arquivocompleto com o cabeçalho
-            cat "$dir_atual$dir_dados"/"$nome_arq" >> "$dir_atual$dir_dados"/arquivocompleto.csv
+            cat $dir_atual$dir_dados/$nome_arq > "$dir_atual$dir_dados/arquivocompleto.csv"
         fi
     done
 fi 
 
-#Remove o arquivo suporte que contem as reclamações para evitar falso positivo quando for checar se tem arquivos baixados
+#Remove o arquivo suporte que contém as reclamações para evitar falso positivo quando for checar se tem arquivos baixados
 rm $dir_atual$dir_dados/.csv 2> /dev/null
 
 #Checa se tem arquivos baixados
-if [ ! "$(ls "$dir_atual$dir_dados")" ]; then
+if [ ! "$(ls "$dir_atual$dir_dados" 2> /dev/null)" ]; then
    echo "ERRO: Não há dados baixados.
 Para baixar os dados antes de gerar as estatísticas, use:
   ./ep2_servico156.sh <nome do arquivo com URLs de dados do Serviço 156>"
-  exit 0    
+  exit 1
 fi
 
-#Por padrão, o arquivo selecionado é o arquivocompleto.csv, no começo não há nenhum filtro e o arquivo suporte, .csv, contem todas as reclamações do arquivocompleto.csv
+#Por padrão, o arquivo selecionado é o arquivocompleto.csv, no começo não há nenhum filtro e o arquivo suporte, .csv, contém todas as reclamações do arquivocompleto.csv
 arq_escolhido="arquivocompleto.csv"
 numero_filtros="0"
 touch $dir_atual$dir_dados/.csv
 tail -n +2 $dir_atual$dir_dados/$arq_escolhido > $dir_atual$dir_dados/.csv
 echo
 
-#Define as colunas que o arquivo contem
+#Define as colunas que o arquivo contém
 for i in $(head -n +1 $dir_atual$dir_dados"/"$arq_escolhido | tr ' ;' '@ '); do
     colunas+=("$(echo $i | tr '@' ' ')")
 done
@@ -197,7 +220,7 @@ while [ true ]; do
         5 ) mostrar_ranking_reclamacoes;;
         6 ) mostrar_reclamacoes;;
         7 ) sair;;
-        *) echo "Comando Invalido
+        *) echo "Comando Inválido
 +++++++++++++++++++++++++++++++++++++++
 ";;
     esac
