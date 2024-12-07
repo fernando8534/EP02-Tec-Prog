@@ -1,4 +1,4 @@
-#O Serviço 156 da Prefeitura de São Paulo
+# O Serviço 156 da Prefeitura de São Paulo
 
 O Serviço 156 da Prefeitura de São Paulo é uma central de atendimento que oferece aos
 cidadãos um canal para solicitar serviços, registrar reclamações, obter informações e acompanhar
@@ -12,6 +12,7 @@ A prefeitura disponibiliza em seu portal de dados abertos os registros anonimiza
 reclamações do Serviço 156 (http://dados.prefeitura.sp.gov.br/dataset/dados-do-sp156). Os dados
 são disponibilizados para download separados em arquivos por trimestre ou bimestre e nos formatos
 CSV e XLS.
+
 Este EP, um script em linguagem Bash, permite baixar arquivos
 CSV de registros de reclamações do Serviço 156, filtrá-los e gerar estatísticas sobre eles.
 Como os campos desses arquivos foram mudando um pouco ao longo dos anos, no EP
